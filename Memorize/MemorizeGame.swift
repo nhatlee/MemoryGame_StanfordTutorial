@@ -8,13 +8,28 @@
 
 import Foundation
 
-struct MemorizeGame<CardContent> {
+struct MemorizeGame<CardContent> where CardContent: Equatable {
     var cards: [Card]
+    var indexOfTheOneAndOlyFaceUpCard: Int? {
+        get { cards.indices.filter { cards[$0].isFaceUp }.only }
+        set {
+            for index in cards.indices {
+                cards[index].isFaceUp = index == newValue
+            }
+        }
+    }
     
     mutating func chose(card: Card) {
-        print("Chose card: \(card.content) id: \(card.id)")
-        if let index = cards.firstIndex(where: { $0.id == card.id }) {
-            cards[index].isFaceUp = true
+        if let chosenIndex = cards.firstIndex(matching: card), !cards[chosenIndex].isFaceUp, !cards[chosenIndex].isMatched {
+            if let potentialMatchIndex = self.indexOfTheOneAndOlyFaceUpCard {
+                if cards[chosenIndex].content == cards[potentialMatchIndex].content {
+                    cards[chosenIndex].isMatched = true
+                    cards[potentialMatchIndex].isMatched = true
+                }
+                self.cards[chosenIndex].isFaceUp = true
+            } else {
+                indexOfTheOneAndOlyFaceUpCard = chosenIndex
+            }
         }
     }
     
@@ -29,7 +44,7 @@ struct MemorizeGame<CardContent> {
     
     struct Card: Identifiable {
         var isFaceUp: Bool = false
-        var isMatch: Bool = false
+        var isMatched: Bool = false
         var content: CardContent
         var id: Int
     }
